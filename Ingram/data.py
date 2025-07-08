@@ -1,4 +1,7 @@
 """数据流"""
+from gevent import monkey
+monkey.patch_all()
+
 import hashlib
 import os
 import time
