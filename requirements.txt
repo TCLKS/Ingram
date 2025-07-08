@@ -10,3 +10,4 @@ pycryptodome
 pyOpenSSL
 requests
 tzlocal
+monkey
