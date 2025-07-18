@@ -21,6 +21,10 @@ _config = {
     'vulnerable': 'results.csv',
     'snapshots': 'snapshots',
 
+    # go port scanner
+    'go_bin': None,
+    'go_workers': 100,
+
     # wechat
     'wxuid': '',
     'wxtoken': '',
