@@ -1,8 +1,8 @@
 """端口扫描工具"""
 import socket
 import subprocess
+from gevent import monkey
 from typing import Iterable, List
-
 from loguru import logger
 
 
@@ -30,6 +30,10 @@ def go_port_scan(ip: str, ports: Iterable[str], go_bin: str, timeout: int = 1) -
     - timeout: 超时时间（秒）
     """
     cmd = [go_bin, "-timeout", str(timeout), ip] + list(map(str, ports))
+    run_func = monkey.get_original('subprocess', 'run')
+    try:
+        res = run_func(cmd, capture_output=True, text=True, check=True)
+=======
     try:
         res = subprocess.run(cmd, capture_output=True, text=True, check=True)
         open_ports = []
