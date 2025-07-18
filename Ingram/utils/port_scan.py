@@ -3,7 +3,6 @@ import socket
 import subprocess
 from gevent import monkey
 from typing import Iterable, List
-
 from loguru import logger
 
 
@@ -34,6 +33,9 @@ def go_port_scan(ip: str, ports: Iterable[str], go_bin: str, timeout: int = 1) -
     run_func = monkey.get_original('subprocess', 'run')
     try:
         res = run_func(cmd, capture_output=True, text=True, check=True)
+=======
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
         open_ports = []
         for line in res.stdout.splitlines():
             if ':' in line:
