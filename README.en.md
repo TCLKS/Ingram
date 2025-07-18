@@ -107,15 +107,27 @@ optional arguments:
 
 ## Port scanner
 
-+ We can use powerful port scanner to obtain active hosts, thereby reducing the scanning range of Ingram and improving the running speed. The specific method is to organize the result file of the port scanner into the format of `ip:port` and use it as the input file of Ingram
+The project ships with a lightweight Go based port scanner `goscan` which can quickly detect open ports concurrently.
 
-+ Here is a brief demonstration of masscan as an example (the detailed usage of masscan will not be repeated here).
+**Build** it in the project root:
 
-+ First, use masscan to scan the surviving host on port 80 or 8000-8008 (you sure can change the port anything else if you want): `masscan -p80,8000-8008 -iL INPUT -oL OUTPUT --rate 8000`
+```bash
+go build -o go_port_scan ./goscan
+```
 
-+ After masscan is done, sort out the result file: `grep 'open' OUTPUT | awk '{printf"%s:%s\n", $4, $3}' > input`
+Run Ingram with `--go-bin` to use the Go scanner:
 
-+ Then: `python run_ingram.py -i input -o output`
+```bash
+python3 run_ingram.py -i input -o output --go-bin ./go_port_scan
+```
+
+You can still use masscan to pre-scan hosts if needed:
+
+```bash
+masscan -p80,8000-8008 -iL INPUT -oL OUTPUT --rate 8000
+grep 'open' OUTPUT | awk '{printf"%s:%s\n", $4, $3}' > input
+python3 run_ingram.py -i input -o output
+```
 
 
 ## Output

@@ -10,6 +10,8 @@ def get_parse():
     parser.add_argument('-t', '--th_num', type=int, default=150, help='the processes num')
     parser.add_argument('-T', '--timeout', type=int, default=3, help='requests timeout')
     parser.add_argument('-D', '--disable_snapshot', action='store_true', help='disable snapshot')
+    parser.add_argument('--go-bin', type=str, default=None, help='path to go port scanner binary')
+    parser.add_argument('--go-workers', type=int, default=100, help='concurrency of go port scanner')
     parser.add_argument('--debug', action='store_true', help='log all msg')
 
     args = parser.parse_args()

@@ -112,13 +112,27 @@ optional arguments:
 
 ## 端口扫描器
 
-+ 我们可以利用强大的端口扫描器来获取活动主机，进而缩小 Ingram 的扫描范围，提高运行速度，具体做法是将端口扫描器的结果文件整理成 `ip:port` 的格式，并作为 Ingram 的输入
+项目中新增了一个基于 Go 的简单端口扫描器 `goscan`，可在高并发下快速发现开放端口。
 
-+ 这里以 masscan 为例简单演示一下（masscan 的详细用法这里不再赘述），首先用 masscan 扫描 80 或 8000-8008 端口存活的主机：`masscan -p80,8000-8008 -iL 目标文件 -oL 结果文件 --rate 8000`
+**编译**：在项目根目录执行
 
-+ masscan 运行完之后，将结果文件整理一下：`grep 'open' 结果文件 | awk '{printf"%s:%s\n", $4, $3}' > targets.txt`
+```bash
+go build -o go_port_scan ./goscan
+```
 
-+ 之后对这些主机进行扫描：`python run_ingram.py -i targets.txt -o out`
+编译后运行 Ingram 时通过 `--go-bin` 指定该可执行文件路径即可让 Go 程序负责端口扫描：
+
+```bash
+python3 run_ingram.py -i targets.txt -o out --go-bin ./go_port_scan
+```
+
+你也可以继续使用 masscan 等外部工具来提前获取开放端口，方式如下：
+
+```bash
+masscan -p80,8000-8008 -iL 目标文件 -oL 结果文件 --rate 8000
+grep 'open' 结果文件 | awk '{printf"%s:%s\n", $4, $3}' > targets.txt
+python3 run_ingram.py -i targets.txt -o out
+```
 
 
 ## ~~微信提醒~~(已移除)

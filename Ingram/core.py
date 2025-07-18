@@ -12,6 +12,7 @@ from .utils import color
 from .utils import common
 from .utils import fingerprint
 from .utils import port_scan
+from .utils.port_scan import go_port_scan
 from .utils import status_bar
 from .utils import timer
 
@@ -67,27 +68,33 @@ class Core:
 
         # 存活检测 (是否有必要)
 
-        # 端口扫描
-        for port in ports:
-            if port_scan(ip, port, self.config.timeout):
-                logger.info(f"{ip} port {port} is open")
-                # 指纹
-                if product := fingerprint(ip, port, self.config):
-                    logger.info(f"{ip}:{port} is {product}")
-                    verified = False
-                    # poc verify & exploit
-                    for poc in self.poc_dict[product]:
-                        if results := poc.verify(ip, port):
-                            verified = True
-                            # found 加 1
-                            self.data.add_found()
-                            # 将验证成功的 poc 记录到 config.vulnerable 中
-                            self.data.add_vulnerable(results[:6])
-                            # snapshot
-                            if not self.config.disable_snapshot:
-                                self.snapshot_pipeline.put((poc.exploit, results))
-                    if not verified:
-                        self.data.add_not_vulnerable([ip, str(port), product])
+        open_ports = []
+        if self.config.go_bin:
+            open_ports = go_port_scan(ip, ports, self.config.go_bin, self.config.timeout)
+        else:
+            for port in ports:
+                if port_scan(ip, port, self.config.timeout):
+                    open_ports.append(port)
+
+        for port in open_ports:
+            logger.info(f"{ip} port {port} is open")
+            # 指纹
+            if product := fingerprint(ip, port, self.config):
+                logger.info(f"{ip}:{port} is {product}")
+                verified = False
+                # poc verify & exploit
+                for poc in self.poc_dict[product]:
+                    if results := poc.verify(ip, port):
+                        verified = True
+                        # found 加 1
+                        self.data.add_found()
+                        # 将验证成功的 poc 记录到 config.vulnerable 中
+                        self.data.add_vulnerable(results[:6])
+                        # snapshot
+                        if not self.config.disable_snapshot:
+                            self.snapshot_pipeline.put((poc.exploit, results))
+                if not verified:
+                    self.data.add_not_vulnerable([ip, str(port), product])
         self.data.add_done()
         self.data.record_running_state()
 
