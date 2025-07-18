@@ -1,10 +1,12 @@
-"""端口扫描"""
+"""端口扫描工具"""
 import socket
+import subprocess
+from typing import Iterable, List
 
 from loguru import logger
 
 
-def port_scan(ip: str, port: str, timeout: int=1) -> bool:
+def port_scan(ip: str, port: str, timeout: int = 1) -> bool:
     """使用 socket 的方式"""
     s = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
     s.settimeout(timeout)
@@ -16,3 +18,28 @@ def port_scan(ip: str, port: str, timeout: int=1) -> bool:
     finally:
         s.close()
     return False
+
+
+def go_port_scan(ip: str, ports: Iterable[str], go_bin: str, timeout: int = 1) -> List[int]:
+    """使用 Go 程序一次性扫描多个端口
+
+    params:
+    - ip: ip 地址
+    - ports: 端口列表
+    - go_bin: Go 可执行文件路径
+    - timeout: 超时时间（秒）
+    """
+    cmd = [go_bin, "-timeout", str(timeout), ip] + list(map(str, ports))
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        open_ports = []
+        for line in res.stdout.splitlines():
+            if ':' in line:
+                try:
+                    open_ports.append(int(line.split(":")[1]))
+                except ValueError:
+                    continue
+        return open_ports
+    except Exception as e:
+        logger.error(e)
+        return []
