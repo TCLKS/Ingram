@@ -40,7 +40,7 @@ def _bar():
         _snapshot = 'Snapshot ' + color.red(snapshot, 'bright') if snapshot else ''
         count = f"{_done}/{_total}({_percent}) {_found} {_snapshot}"
 
-        print(f"\r{icon} {count} {_time}        ", end='')
+        print(f"\r{icon} {count} {_time}        ", end='', flush=True)
     return wrapper
 
 
@@ -58,3 +58,4 @@ def status_bar(core):
         print_bar()
         time.sleep(.1)
     print_bar()
+    print()

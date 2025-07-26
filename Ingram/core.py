@@ -8,6 +8,7 @@ from .pocs import get_poc_dict
 from .utils import color
 from .utils import common
 from .utils import fingerprint
+from .utils.status_bar import status_bar
 from .utils import timer
 
 
@@ -59,8 +60,6 @@ class Core:
         items = target.split(':')
         ip = items[0]
         ports = [items[1], ] if len(items) > 1 else self.config.ports
-
-        # 存活检测 (是否有必要)
 
         for port in ports:
             logger.info(f"testing {ip}:{port}")
