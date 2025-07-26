@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+from threading import Thread
 from loguru import logger
 
 from .data import Data, SnapshotPipeline
@@ -63,6 +64,10 @@ class Core:
 
         for port in ports:
             logger.info(f"testing {ip}:{port}")
+            if not port_scan(ip, port, self.config.timeout):
+                logger.info(f"{ip} port {port} closed")
+                continue
+            logger.info(f"{ip} port {port} is open")
             if product := fingerprint(ip, port, self.config):
                 logger.info(f"{ip}:{port} is {product}")
                 verified = False
@@ -83,10 +88,14 @@ class Core:
         logger.info(f"config is {self.config}")
 
         try:
+            # 状态栏线程
+            status_thread = Thread(target=status_bar, args=[self], daemon=True)
+            status_thread.start()
             for target in self.data.ip_generator:
                 self._scan(target)
 
             self.report()
+            status_thread.join()
 
         except KeyboardInterrupt:
             pass
