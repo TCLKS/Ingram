@@ -52,9 +52,14 @@ def fingerprint(ip, port, config):
     req_dict = {}  # 暂存 requests 的返回值
     session = requests.session()
     headers = {'Connection': 'close', 'User-Agent': config.user_agent}
+
     for rule in config.rules:
         try:
-            req = req_dict.get(rule.path) or session.get(f"http://{ip}:{port}{rule.path}", headers=headers, timeout=config.timeout)
+            req = req_dict.get(rule.path) or session.get(
+                f"http://{ip}:{port}{rule.path}",
+                headers=headers,
+                timeout=config.timeout,
+            )
             # req_dict 里只保存 status_code 为 200 的 req
             if (rule.path not in req_dict) and (req.status_code == 200):
                 req_dict[rule.path] = req
@@ -63,4 +68,6 @@ def fingerprint(ip, port, config):
                 return rule.product
         except Exception as e:
             logger.error(e)
+            # 出现异常直接跳过当前目标
+            return None
     return None
