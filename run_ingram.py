@@ -23,7 +23,7 @@ from Ingram.utils import get_parse
 from Ingram.utils import log
 from Ingram.utils import logo
 
-
+sys.stderr = open(os.devnull, 'w')
 def run():
     try:
         # logo
