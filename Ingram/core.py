@@ -1,7 +1,6 @@
 import os
 from collections import defaultdict
 from threading import Thread
-
 from loguru import logger
 
 from .data import Data, SnapshotPipeline
@@ -9,8 +8,6 @@ from .pocs import get_poc_dict
 from .utils import color
 from .utils import common
 from .utils import fingerprint
-from .utils import port_scan
-from .utils import status_bar
 from .utils import timer
 
 
@@ -94,7 +91,6 @@ class Core:
             # 状态栏线程
             status_thread = Thread(target=status_bar, args=[self], daemon=True)
             status_thread.start()
-
             for target in self.data.ip_generator:
                 self._scan(target)
 
