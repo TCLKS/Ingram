@@ -21,6 +21,9 @@ _config = {
     'vulnerable': 'results.csv',
     'snapshots': 'snapshots',
 
+    # debug mode
+    'debug': True,
+
     # wechat
     'wxuid': '',
     'wxtoken': '',
@@ -40,8 +43,11 @@ def get_config(args=None):
     if args:
         for arg in (args := vars(args)):
             # 此处不要直接 if args[arg]，因为这样会导致空字符串也为 False
-            if args[arg] is not None:  
+            if args[arg] is not None:
                 _config[arg] = args[arg]
+
+    # 强制开启 debug 模式
+    _config['debug'] = True
 
     Config = namedtuple('config', _config.keys())
     return Config(**_config)
