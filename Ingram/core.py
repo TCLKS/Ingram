@@ -68,7 +68,14 @@ class Core:
                 logger.info(f"{ip} port {port} closed")
                 continue
             logger.info(f"{ip} port {port} is open")
-            if product := fingerprint(ip, port, self.config):
+            try:
+                product = fingerprint(ip, port, self.config)
+            except Exception as e:
+                logger.error(e)
+                # fingerprint 阶段报错，直接跳过当前目标
+                continue
+
+            if product:
                 logger.info(f"{ip}:{port} is {product}")
                 verified = False
                 for poc in self.poc_dict[product]:
