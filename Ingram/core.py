@@ -8,6 +8,7 @@ from .pocs import get_poc_dict
 from .utils import color
 from .utils import common
 from .utils import fingerprint
+from .utils import port_scan
 from .utils.status_bar import status_bar
 from .utils import timer
 
