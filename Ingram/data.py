@@ -2,15 +2,12 @@
 import hashlib
 import os
 import time
-from concurrent.futures import ThreadPoolExecutor
-from queue import Queue
-from threading import Lock, RLock, Thread
+from threading import Lock
 
 from loguru import logger
 
 from .utils import common
 from .utils import timer
-from .utils import net
 
 
 @common.singleton
@@ -50,31 +47,16 @@ class Data:
         """计算目标总数"""
         with open(self.config.in_file, 'r') as f:
             for line in f:
-                if (strip_line := line.strip()) and not line.startswith('#'):
-                    self.add_total(net.get_ip_seg_len(strip_line))
+                if (strip_line := line.strip()) and not strip_line.startswith('#'):
+                    self.add_total()
 
     def _generate_ip(self):
-        current, remain = 0, []
         with open(self.config.in_file, 'r') as f:
-            if self.done:
-                for line in f:
-                    if (strip_line := line.strip()) and not line.startswith('#'):
-                        current += net.get_ip_seg_len(strip_line)
-                        if current == self.done:
-                            break
-                        elif current < self.done:
-                            continue
-                        else:
-                            ips = net.get_all_ip(strip_line)
-                            remain = ips[(self.done - current):]
-                            break
-                for ip in remain:
-                    yield ip
-
-            for line in f:
-                if (strip_line := line.strip()) and not line.startswith('#'):
-                    for ip in net.get_all_ip(strip_line):
-                        yield ip
+            for idx, line in enumerate(f):
+                if (strip_line := line.strip()) and not strip_line.startswith('#'):
+                    if idx < self.done:
+                        continue
+                    yield strip_line
 
     def preprocess(self):
         """预处理"""
@@ -84,11 +66,8 @@ class Data:
 
         self._load_state_from_disk()
 
-        cal_thread = Thread(target=self._cal_total)
-        cal_thread.start()
-
+        self._cal_total()
         self.ip_generator = self._generate_ip()
-        cal_thread.join()
 
     def add_total(self, item=1):
         if isinstance(item, int):
@@ -144,51 +123,13 @@ class SnapshotPipeline:
 
     def __init__(self, config):
         self.config = config
-        self.var_lock = RLock()
-        self.pipeline = Queue(self.config.th_num * 2)
-        self.workers = ThreadPoolExecutor(self.config.th_num)
         self.snapshots_dir = os.path.join(self.config.out_dir, self.config.snapshots)
         self.done = len(os.listdir(self.snapshots_dir))
-        self.task_count = 0
-        self.task_count_lock = Lock()
 
-    def put(self, msg):
-        """放入一条消息
-        Queue 自代锁，且会阻塞
-        params:
-        - msg: (poc.exploit, results)
-        """
-        self.pipeline.put(msg)
-
-    def empty(self):
-        return self.pipeline.empty()
-
-    def get(self):
-        return self.pipeline.get()
+    def snapshot(self, exploit_func, results):
+        """利用 poc 的 exploit 方法获取 results 处的资源"""
+        if exploit_func(results):
+            self.done += 1
 
     def get_done(self):
-        with self.var_lock:
-            return self.done
-
-    def add_done(self, num=1):
-        with self.var_lock:
-            self.done += num
-
-    def _snapshot(self, exploit_func, results):
-        """利用 poc 的 exploit 方法获取 results 处的资源
-        params:
-        - exploit_func: pocs 路径下每个 poc 的 exploit 方法
-        - results: poc 的 verify 验证为真时的返回结果
-        """
-        if res := exploit_func(results):
-            self.add_done(res)
-        with self.task_count_lock:
-            self.task_count -= 1
-
-    def process(self, core):
-        while not core.finish():
-            exploit_func, results = self.get()
-            self.workers.submit(self._snapshot, exploit_func, results)
-            with self.task_count_lock:
-                self.task_count += 1
-            time.sleep(.1)
+        return self.done

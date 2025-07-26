@@ -5,20 +5,18 @@
 # @Desc   : Webcam vulnerability scanning tool
 
 #=================== 需放置于最开头 ====================
-import warnings; warnings.filterwarnings("ignore")
-from gevent import monkey; monkey.patch_all(thread=False)
+import warnings
+warnings.filterwarnings("ignore")
 #======================================================
 
 import os
 import sys
-from multiprocessing import Process
 
 from loguru import logger
 
 from Ingram import get_config
 from Ingram import Core
 from Ingram.utils import color
-from Ingram.utils import common
 from Ingram.utils import get_parse
 from Ingram.utils import log
 from Ingram.utils import logo
@@ -34,7 +32,9 @@ def run():
         config = get_config(get_parse())
         if not os.path.isdir(config.out_dir):
             os.mkdir(config.out_dir)
-            os.mkdir(os.path.join(config.out_dir, config.snapshots))
+        snapshots_path = os.path.join(config.out_dir, config.snapshots)
+        if not os.path.isdir(snapshots_path):
+            os.mkdir(snapshots_path)
         if not os.path.isfile(config.in_file):
             print(f"{color.red('the input file')} {color.yellow(config.in_file)} {color.red('does not exists!')}")
             sys.exit()
@@ -42,17 +42,11 @@ def run():
         # log 配置
         log.config_logger(os.path.join(config.out_dir, config.log), config.debug)
 
-        # 任务进程
-        p = Process(target=Core(config).run)
-        if common.os_check() == 'windows':
-            p.run()
-        else:
-            p.start()
-            p.join()
+        # 执行任务
+        Core(config).run()
 
     except KeyboardInterrupt:
         logger.warning('Ctrl + c was pressed')
-        p.kill()
         sys.exit()
 
     except Exception as e:
